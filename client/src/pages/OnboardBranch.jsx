@@ -1,14 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { Building2, Plus, Edit2, Trash2, Check, X, AlertTriangle } from 'lucide-react';
+import { Building2, Plus, Edit2, Trash2, Check, X, AlertTriangle, Loader2 } from 'lucide-react';
 
 const OnboardBranch = () => {
   // 1. State Management
-  const [branches, setBranches] = useState([
-    { id: 1, name: 'Main HQ' },
-    { id: 2, name: 'North Branch' }
-  ]);
+  const [branches, setBranches] = useState([]);
   const [branchInput, setBranchInput] = useState('');
+  const [fetching, setFetching] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   
   // Inline editing states
   const [editingId, setEditingId] = useState(null);
@@ -17,26 +16,101 @@ const OnboardBranch = () => {
   // Delete modal state
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, branchId: null, branchName: '' });
 
-  // 2. Handlers
-  const handleAddBranch = (e) => {
-    e.preventDefault();
-    if (!branchInput.trim()) return;
+  // Get Auth Header Config
+  const getAuthHeaders = () => ({
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${localStorage.getItem('token')}`
+  });
 
-    // Check if branch name already exists (case-insensitive)
-    const exists = branches.some(b => b.name.toLowerCase() === branchInput.trim().toLowerCase());
-    if (exists) {
-      toast.error('This branch name is already onboarded!');
-      return;
+  // --- FETCH ALL BRANCHES ON MOUNT ---
+  const fetchBranches = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/branches', {
+        headers: getAuthHeaders()
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Failed to sync branch records.');
+      setBranches(data);
+    } catch (error) {
+      toast.error(error.message || 'Database fetch connectivity error.');
+    } finally {
+      setFetching(false);
     }
+  };
 
-    const newBranch = {
-      id: Date.now(),
-      name: branchInput.trim()
-    };
+  useEffect(() => {
+    fetchBranches();
+  }, []);
 
-    setBranches([...branches, newBranch]);
-    setBranchInput('');
-    toast.success('New branch onboarded successfully!');
+  // --- HANDLERS ---
+  const handleAddBranch = async (e) => {
+    e.preventDefault();
+    if (!branchInput.trim() || submitting) return;
+
+    setSubmitting(true);
+    const toastId = toast.loading('Registering branch node...');
+
+    try {
+      const response = await fetch('http://localhost:5000/api/branches', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ name: branchInput.trim() })
+      });
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.message || 'Failed to save branch.');
+
+      setBranches([data.branch, ...branches]);
+      setBranchInput('');
+      toast.success('New branch onboarded to database!', { id: toastId });
+    } catch (error) {
+      toast.error(error.message, { id: toastId });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleUpdate = async (id) => {
+    if (!editingName.trim()) return;
+
+    const toastId = toast.loading('Updating database entries...');
+    try {
+      const response = await fetch(`http://localhost:5000/api/branches/${id}`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ name: editingName.trim() })
+      });
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.message || 'Update processing failed.');
+
+      setBranches(branches.map(b => b.id === id ? data.branch : b));
+      setEditingId(null);
+      setEditingName('');
+      toast.success('Branch details permanently updated.', { id: toastId });
+    } catch (error) {
+      toast.error(error.message, { id: toastId });
+    }
+  };
+
+  const confirmDelete = async () => {
+    const { branchId } = deleteModal;
+    const toastId = toast.loading('Purging record from ledger...');
+    try {
+      const response = await fetch(`http://localhost:5000/api/branches/${branchId}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.message || 'Purge request rejected.');
+
+      setBranches(branches.filter(b => b.id !== branchId));
+      closeDeleteModal();
+      toast.success('Branch removed from database registry.', { id: toastId });
+    } catch (error) {
+      toast.error(error.message, { id: toastId });
+    }
   };
 
   const openDeleteModal = (id, name) => {
@@ -47,35 +121,9 @@ const OnboardBranch = () => {
     setDeleteModal({ isOpen: false, branchId: null, branchName: '' });
   };
 
-  const confirmDelete = () => {
-    const { branchId } = deleteModal;
-    setBranches(branches.filter(branch => branch.id !== branchId));
-    closeDeleteModal();
-    toast.success('Branch removed from registry.');
-  };
-
   const startEdit = (branch) => {
     setEditingId(branch.id);
     setEditingName(branch.name);
-  };
-
-  const handleUpdate = (id) => {
-    if (!editingName.trim()) return;
-
-    // Check if updating to a name that already exists elsewhere
-    const exists = branches.some(b => b.id !== id && b.name.toLowerCase() === editingName.trim().toLowerCase());
-    if (exists) {
-      toast.error('Another branch already has this name!');
-      return;
-    }
-
-    setBranches(branches.map(branch => 
-      branch.id === id ? { ...branch, name: editingName.trim() } : branch
-    ));
-    
-    setEditingId(null);
-    setEditingName('');
-    toast.success('Branch details updated.');
   };
 
   const cancelEdit = () => {
@@ -93,7 +141,7 @@ const OnboardBranch = () => {
         </div>
         <div>
           <h2 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">Onboard Corporate Branches</h2>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">Register, update, and manage official organizational business branches.</p>
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">Register, update, and manage official organizational business branches inside database ledger.</p>
         </div>
       </div>
 
@@ -109,17 +157,19 @@ const OnboardBranch = () => {
               <input
                 type="text"
                 required
+                disabled={submitting}
                 value={branchInput}
                 onChange={(e) => setBranchInput(e.target.value)}
                 placeholder="E.g., Chennai Corporate Office"
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm outline-none transition-all bg-white"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm outline-none transition-all bg-white disabled:bg-slate-100"
               />
             </div>
             <button
               type="submit"
-              className="flex items-center justify-center gap-2 py-2.5 px-5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm rounded-xl shadow-lg shadow-indigo-600/15 transition-all outline-none whitespace-nowrap"
+              disabled={submitting}
+              className="flex items-center justify-center gap-2 py-2.5 px-5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm rounded-xl shadow-lg shadow-indigo-600/15 transition-all outline-none whitespace-nowrap disabled:opacity-70"
             >
-              <Plus size={16} />
+              {submitting ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
               <span>Add Branch</span>
             </button>
           </div>
@@ -130,7 +180,12 @@ const OnboardBranch = () => {
       <div className="border-t border-slate-100 pt-5">
         <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-500 mb-4">Registered Operational Branches</h3>
         
-        {branches.length === 0 ? (
+        {fetching ? (
+          <div className="flex items-center justify-center py-12 text-slate-400 gap-2 text-sm font-medium">
+            <Loader2 size={18} className="animate-spin text-indigo-600" />
+            <span>Syncing database matrices...</span>
+          </div>
+        ) : branches.length === 0 ? (
           <div className="p-8 text-sm text-slate-400 font-medium text-center border border-dashed border-slate-200 rounded-2xl bg-slate-50/30">
             No active business branch nodes found in records registry.
           </div>
@@ -212,10 +267,7 @@ const OnboardBranch = () => {
       {/* --- CUSTOM POPUP MODAL (DELETE CONFIRMATION) --- */}
       {deleteModal.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Backdrop Layer */}
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={closeDeleteModal}></div>
-          
-          {/* Modal Container */}
           <div className="bg-white rounded-2xl max-w-md w-full border border-slate-200/80 shadow-2xl p-6 relative z-10 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-start gap-4">
               <div className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 flex items-center justify-center shrink-0">
@@ -228,7 +280,6 @@ const OnboardBranch = () => {
                 </p>
               </div>
             </div>
-            
             <div className="flex items-center justify-end gap-3 mt-6">
               <button
                 type="button"

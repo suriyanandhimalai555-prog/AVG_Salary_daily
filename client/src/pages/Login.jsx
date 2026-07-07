@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast'; // Import the toast utility
-import { Lock, Mail, Loader2 } from 'lucide-react'; // Added icons for modern feel
+import toast from 'react-hot-toast'; 
+import { Lock, Mail, Loader2 } from 'lucide-react'; 
 import Logo from '../assets/logo.png';
 
 const Login = () => {
@@ -9,6 +9,46 @@ const Login = () => {
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
+
+    const handleLoginSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        const toastId = toast.loading('Verifying identity matrix...');
+
+        try {
+            const response = await fetch('http://localhost:5000/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Authorization system mapping failed.');
+            }
+
+            // Store critical authorization objects inside application landscape
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('userRole', data.user.role);
+
+            toast.success(`Welcome back, authorized ${data.user.role}!`, { id: toastId });
+
+            // Role Based UI Routing
+            if (data.user.role === 'admin') {
+                navigate('/admin-dashboard');
+            } else {
+                navigate('/dashboard');
+            }
+
+        } catch (error) {
+            toast.error(error.message || 'Network communication fault encountered.', { id: toastId });
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 px-4">
@@ -37,7 +77,7 @@ const Login = () => {
                     </div>
 
                     {/* Interactive Input Form */}
-                    <form className="space-y-5">
+                    <form onSubmit={handleLoginSubmit} className="space-y-5">
                         <div>
                             <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
                                 Email Address
@@ -89,11 +129,6 @@ const Login = () => {
                                 <label htmlFor="remember-me" className="ml-2 block text-xs font-semibold text-slate-600 cursor-pointer select-none">
                                     Remember me
                                 </label>
-                            </div>
-                            <div className="text-xs">
-                                {/* <a href="#" className="font-bold text-indigo-600 hover:text-indigo-700 transition-colors">
-                                    Forgot password?
-                                </a> */}
                             </div>
                         </div>
 

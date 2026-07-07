@@ -34,7 +34,7 @@ const DashboardLayout = () => {
   const menuItems = [
     { name: 'Daily Salary', path: '/admin/salary-update', icon: LayoutDashboard },
     { name: 'Onboard Branch', path: '/admin/onboard-branch', icon: Users },
-    { name: 'Onboard User', path: '/admin/onboard-user', icon: Settings },
+    { name: 'Branch Data', path: '/admin/branch-data', icon: Settings },
   ];
 
   const handleLogout = () => {
