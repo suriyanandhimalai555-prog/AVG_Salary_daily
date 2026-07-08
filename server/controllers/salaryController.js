@@ -83,7 +83,7 @@ export const submitSalaryStatement = async (req, res) => {
   }
 };
 
-// 3. GET: Fetch all individual row entries logged inside a selected corporate branch
+// 3. GET: Fetch aggregated total summaries per employee for a selected branch
 export const getBranchRecords = async (req, res) => {
   try {
     const { branchId } = req.query;
@@ -93,35 +93,33 @@ export const getBranchRecords = async (req, res) => {
 
     const queryText = `
       SELECT 
-        id,
-        branch_id AS "branchId",
-        employee_name AS "employeeName",
-        designation,
-        bank_name AS "bankName",
-        account_number AS "accountNumber",
-        ifsc_code AS "ifscCode",
-        entry_date AS "entryDate",
-        renewal,
-        new_amount AS "newAmount",
-        gold_coin AS "goldCoin",
-        gvcn,
-        lss,
-        gvcr,
-        trade,
-        land,
-        builders,
-        total_efgh AS "totalEFGH",
-        renewal_15 AS "renewal15",
-        new_20 AS "new20",
-        salary,
-        land_payout AS "landPayout",
-        commissions,
-        grand_total AS "grandTotal",
-        payout_10th AS "payout10th",
-        payout_16th AS "payout16th"
+        MAX(employee_name) AS "employeeName",
+        MAX(designation) AS "designation",
+        MAX(bank_name) AS "bankName",
+        MAX(account_number) AS "accountNumber",
+        MAX(ifsc_code) AS "ifscCode",
+        SUM(renewal) AS "renewal",
+        SUM(new_amount) AS "newAmount",
+        SUM(gold_coin) AS "goldCoin",
+        SUM(gvcn) AS "gvcn",
+        SUM(lss) AS "lss",
+        SUM(gvcr) AS "gvcr",
+        SUM(trade) AS "trade",
+        SUM(land) AS "land",
+        SUM(builders) AS "builders",
+        SUM(total_efgh) AS "totalEFGH",
+        SUM(renewal_15) AS "renewal15",
+        SUM(new_20) AS "new20",
+        SUM(salary) AS "salary",
+        SUM(land_payout) AS "landPayout",
+        SUM(commissions) AS "commissions",
+        SUM(grand_total) AS "grandTotal",
+        SUM(payout_10th) AS "payout10th",
+        SUM(payout_16th) AS "payout16th"
       FROM salaries
       WHERE branch_id = $1
-      ORDER BY entry_date DESC, id DESC;
+      GROUP BY LOWER(employee_name)
+      ORDER BY "employeeName" ASC;
     `;
 
     const { rows } = await pool.query(queryText, [branchId]);

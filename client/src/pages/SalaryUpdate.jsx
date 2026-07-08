@@ -188,7 +188,7 @@ const DataEntry = () => {
       const data = await response.json();
 
       if (response.ok) {
-        toast.success('System record committed to backend DB!', { id: toastId });
+        toast.success('Successfully Record Submitted', { id: toastId });
         setSearchQuery('');
         setFormData({
           employeeName: '', designation: '', bankName: '', accountNumber: '', ifscCode: '',
@@ -219,7 +219,7 @@ const DataEntry = () => {
             <Database size={20} />
           </div>
           <div>
-            <h2 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">Salary Tracker Data Matrix</h2>
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">Salary Tracker</h2>
             <p className="text-xs sm:text-sm text-slate-500 mt-0.5">Input employee branch operational transactional metrics safely.</p>
           </div>
         </div>
@@ -253,7 +253,7 @@ const DataEntry = () => {
         {/* Branch Option Dropdown Matrix Selection (Placed BEFORE Name Input) */}
         <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/60 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Operational Corporate Branch</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Operational Branch</label>
             <div className="relative">
               <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400"><Building2 size={16} /></span>
               <select
@@ -524,7 +524,7 @@ const DataEntry = () => {
           className="w-full flex items-center justify-center gap-2 mt-2 py-3 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-semibold text-sm rounded-xl shadow-lg transition-all outline-none animate-none"
         >
           {loading ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-          <span>{loading ? 'Processing System Entries...' : 'Submit Records Ledger'}</span>
+          <span>{loading ? 'Processing System Entries...' : 'Submit Records'}</span>
         </button>
       </form>
     </div>

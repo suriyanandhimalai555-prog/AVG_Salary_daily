@@ -62,7 +62,7 @@ const OnboardBranch = () => {
 
       setBranches([data.branch, ...branches]);
       setBranchInput('');
-      toast.success('New branch onboarded to database!', { id: toastId });
+      toast.success('New branch onboarded!', { id: toastId });
     } catch (error) {
       toast.error(error.message, { id: toastId });
     } finally {
@@ -140,8 +140,8 @@ const OnboardBranch = () => {
           <Building2 size={20} />
         </div>
         <div>
-          <h2 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">Onboard Corporate Branches</h2>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">Register, update, and manage official organizational business branches inside database ledger.</p>
+          <h2 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">Onboard Branches</h2>
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">Register, update, and manage official organizational business branches.</p>
         </div>
       </div>
 
