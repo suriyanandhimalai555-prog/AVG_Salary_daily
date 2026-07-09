@@ -1,10 +1,10 @@
-import pool from '../config/db.js'; // Adjust path to your db pool configuration
+import pool from '../config/db.js';
 
 export const setupSalaryDatabase = async () => {
   const queryText = `
     CREATE TABLE IF NOT EXISTS salaries (
       id SERIAL PRIMARY KEY,
-      branch_id INTEGER NOT NULL, -- Assumes your SQL Branch table uses an Integer ID
+      branch_id INTEGER NOT NULL, 
       employee_name VARCHAR(255) NOT NULL,
       designation VARCHAR(255) NOT NULL,
       bank_name VARCHAR(255) NOT NULL,
@@ -20,6 +20,12 @@ export const setupSalaryDatabase = async () => {
       trade NUMERIC(12, 2) DEFAULT 0,
       land NUMERIC(12, 2) DEFAULT 0,
       builders NUMERIC(12, 2) DEFAULT 0,
+      
+      -- Added Discrete Columns
+      trade_commission NUMERIC(12, 2) DEFAULT 0,
+      land_commission NUMERIC(12, 2) DEFAULT 0,
+      builders_commission NUMERIC(12, 2) DEFAULT 0,
+
       total_efgh NUMERIC(12, 2) DEFAULT 0,
       renewal_15 NUMERIC(12, 2) DEFAULT 0,
       new_20 NUMERIC(12, 2) DEFAULT 0,

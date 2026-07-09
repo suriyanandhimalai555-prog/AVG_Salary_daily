@@ -21,7 +21,7 @@ const DataEntry = () => {
     bankName: '',
     accountNumber: '',
     ifscCode: '',
-    entryDate: new Date().toISOString().split('T')[0], // Changed from Month to Daily Date Selection
+    entryDate: new Date().toISOString().split('T')[0],
     renewal: '',
     newAmount: '', 
     goldCoin: '',
@@ -31,8 +31,10 @@ const DataEntry = () => {
     trade: '',
     land: '',
     builders: '',
+    tradeCommission: '',
+    landCommission: '',
+    buildersCommission: '',
     salary: '',
-    landPayout: '', 
     commissions: ''
   });
 
@@ -96,10 +98,13 @@ const DataEntry = () => {
   const getNum = (val) => (val === '' ? 0 : Number(val));
 
   // --- AUTOMATIC DERIVED FORMULAS ---
-  const totalEFGH = getNum(formData.gvcn) + getNum(formData.lss) + getNum(formData.gvcr) + getNum(formData.trade);
+  const totalEFGH = getNum(formData.newAmount) + getNum(formData.goldCoin) + getNum(formData.gvcn) + getNum(formData.lss);
   const renewal15 = Math.round(getNum(formData.renewal) * 0.15);
-  const new20 = Math.round(getNum(formData.newAmount) * 0.20);
-  const grandTotal = renewal15 + new20 + getNum(formData.salary) + getNum(formData.landPayout) + getNum(formData.commissions);
+  const new20 = Math.round(totalEFGH * 0.20);
+  
+  // Dynamic summation of trade, land, and builder commissions
+  const calculatedLandPayout = getNum(formData.tradeCommission) + getNum(formData.landCommission) + getNum(formData.buildersCommission);
+  const grandTotal = renewal15 + new20 + getNum(formData.salary) + calculatedLandPayout + getNum(formData.commissions);
 
   // --- SPLIT RELEASE SCHEDULES ---
   const payout10th = grandTotal > 25000 ? 25000 : grandTotal;
@@ -114,7 +119,6 @@ const DataEntry = () => {
     }
   };
 
-  // Autocomplete auto-fills position, bank, account number, ifsc code
   const handleSelectOldEmployee = (user) => {
     const nameStr = user.employeeName || '';
     setFormData({
@@ -136,10 +140,13 @@ const DataEntry = () => {
       employeeName: '', designation: '', bankName: '', accountNumber: '', ifscCode: '',
       entryDate: new Date().toISOString().split('T')[0],
       renewal: '', newAmount: '', goldCoin: '', gvcn: '', lss: '', gvcr: '', 
-      trade: '', land: '', builders: '', salary: '', landPayout: '', commissions: ''
+      trade: '', land: '', builders: '', 
+      tradeCommission: '', landCommission: '', buildersCommission: '',
+      salary: '', commissions: ''
     });
   };
 
+  // !!! FIXED SUBMISSION FUNCTION !!!
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedBranch) {
@@ -167,11 +174,17 @@ const DataEntry = () => {
       trade: getNum(formData.trade),
       land: getNum(formData.land),
       builders: getNum(formData.builders),
+      
+      // FIX: Added missing commission fields into payload matching backend camelCase expectations
+      tradeCommission: getNum(formData.tradeCommission),
+      landCommission: getNum(formData.landCommission),
+      buildersCommission: getNum(formData.buildersCommission),
+
       totalEFGH: totalEFGH,
       renewal15: renewal15,
       new20: new20,
       salary: getNum(formData.salary),
-      landPayout: getNum(formData.landPayout),
+      landPayout: calculatedLandPayout, 
       commissions: getNum(formData.commissions),
       grandTotal: grandTotal,
       payout10th: payout10th,
@@ -194,7 +207,9 @@ const DataEntry = () => {
           employeeName: '', designation: '', bankName: '', accountNumber: '', ifscCode: '',
           entryDate: new Date().toISOString().split('T')[0],
           renewal: '', newAmount: '', goldCoin: '', gvcn: '', lss: '', gvcr: '', 
-          trade: '', land: '', builders: '', salary: '', landPayout: '', commissions: ''
+          trade: '', land: '', builders: '',
+          tradeCommission: '', landCommission: '', buildersCommission: '',
+          salary: '', commissions: ''
         });
       } else {
         toast.error(data.message || 'Error executing ledger save.', { id: toastId });
@@ -250,7 +265,7 @@ const DataEntry = () => {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         
-        {/* Branch Option Dropdown Matrix Selection (Placed BEFORE Name Input) */}
+        {/* Branch Option Dropdown Matrix Selection */}
         <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/60 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Operational Branch</label>
@@ -361,18 +376,21 @@ const DataEntry = () => {
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Position / Designation</label>
               <div className="relative">
                 <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400"><Briefcase size={16} /></span>
-                <input
-                  type="text"
+                <select
                   name="designation"
                   required
-                  readOnly={employeeType === 'old'}
+                  disabled={employeeType === 'old'}
                   value={formData.designation}
                   onChange={handleChange}
-                  placeholder="E.g., BM, GM, Admin"
-                  className={`w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm outline-none transition-all ${
+                  className={`w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm outline-none transition-all appearance-none bg-white ${
                     employeeType === 'old' ? 'bg-slate-50 text-slate-500 cursor-not-allowed' : 'focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500'
                   }`}
-                />
+                >
+                  <option value="">-- Select Position --</option>
+                  {['Director', 'GM', 'BM', 'Admin', 'ABM', 'SO', 'AO', 'Incentive'].map((pos) => (
+                    <option key={pos} value={pos}>{pos}</option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>
@@ -457,8 +475,33 @@ const DataEntry = () => {
                 </div>
               </div>
             ))}
+          </div>
+
+          <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-400 mt-6 mb-3">Commissions Layout Breakdown</h4>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-50/50 p-4 rounded-xl border border-slate-100">
+            {['tradeCommission', 'landCommission', 'buildersCommission'].map((f) => (
+              <div key={f}>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                  {f === 'tradeCommission' ? 'Trade Commission' : f === 'landCommission' ? 'Land Commission' : 'Builders Commission'}
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500 font-medium text-sm">₹</span>
+                  <input
+                    type="number"
+                    name={f}
+                    value={formData[f]}
+                    onChange={handleChange}
+                    placeholder="0"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm outline-none transition-all bg-white"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Total E+F+G+H</label>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Total E+F+G+H (New + Gold + Gvcn + Lss)</label>
               <div className="relative"><span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 text-sm">₹</span>
                 <input type="number" readOnly value={totalEFGH} className="w-full pl-10 pr-4 py-2.5 rounded-xl border bg-slate-50/80 text-slate-500 text-sm cursor-not-allowed" />
               </div>
@@ -470,7 +513,7 @@ const DataEntry = () => {
               </div>
             </div>
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">New 20%</label>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">New 20% (From Total E+F+G+H)</label>
               <div className="relative"><span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 text-sm">₹</span>
                 <input type="number" readOnly value={new20} className="w-full pl-10 pr-4 py-2.5 rounded-xl border bg-slate-50/80 text-slate-500 text-sm cursor-not-allowed" />
               </div>
@@ -482,14 +525,32 @@ const DataEntry = () => {
         <div className="border-t border-slate-100 pt-5">
           <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-600 mb-4">Base Payout Allotments</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {['salary', 'landPayout', 'commissions'].map((f) => (
-              <div key={f}>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">{f === 'landPayout' ? 'trade+Land+builders' : f}</label>
-                <div className="relative"><span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500 text-sm">₹</span>
-                  <input type="number" name={f} value={formData[f]} onChange={handleChange} placeholder="0" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500/20 text-sm outline-none" />
-                </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Salary</label>
+              <div className="relative"><span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500 text-sm">₹</span>
+                <input type="number" name="salary" value={formData.salary} onChange={handleChange} placeholder="0" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500/20 text-sm outline-none" />
               </div>
-            ))}
+            </div>
+            
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">trade+Land+builders (Auto Total)</label>
+              <div className="relative"><span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500 text-sm">₹</span>
+                <input 
+                  type="number" 
+                  readOnly 
+                  value={calculatedLandPayout} 
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border bg-slate-50 text-slate-600 font-medium text-sm cursor-not-allowed" 
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Commissions</label>
+              <div className="relative"><span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500 text-sm">₹</span>
+                <input type="number" name="commissions" value={formData.commissions} onChange={handleChange} placeholder="0" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500/20 text-sm outline-none" />
+              </div>
+            </div>
+
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-emerald-600 mb-1.5">Total Sum Payout</label>
               <div className="relative"><span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-emerald-600 font-bold text-sm">₹</span>

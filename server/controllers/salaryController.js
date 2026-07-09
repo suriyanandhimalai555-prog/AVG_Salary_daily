@@ -41,9 +41,10 @@ export const submitSalaryStatement = async (req, res) => {
       INSERT INTO salaries (
         branch_id, employee_name, designation, bank_name, account_number, ifsc_code, entry_date,
         renewal, new_amount, gold_coin, gvcn, lss, gvcr, trade, land, builders,
+        trade_commission, land_commission, builders_commission, -- Added Tracking Fields
         total_efgh, renewal_15, new_20, salary, land_payout, commissions, grand_total, payout_10th, payout_16th
       ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28
       ) RETURNING *;
     `;
 
@@ -64,6 +65,12 @@ export const submitSalaryStatement = async (req, res) => {
       data.trade || 0,
       data.land || 0,
       data.builders || 0,
+      
+      // Captured values mapping from frontend keys
+      data.tradeCommission || 0,
+      data.landCommission || 0,
+      data.buildersCommission || 0,
+
       data.totalEFGH || 0,
       data.renewal15 || 0,
       data.new20 || 0,
@@ -107,6 +114,12 @@ export const getBranchRecords = async (req, res) => {
         SUM(trade) AS "trade",
         SUM(land) AS "land",
         SUM(builders) AS "builders",
+        
+        -- Aggregate the discrete commissions fields back into the layout
+        SUM(trade_commission) AS "tradeCommission",
+        SUM(land_commission) AS "landCommission",
+        SUM(builders_commission) AS "buildersCommission",
+
         SUM(total_efgh) AS "totalEFGH",
         SUM(renewal_15) AS "renewal15",
         SUM(new_20) AS "new20",
