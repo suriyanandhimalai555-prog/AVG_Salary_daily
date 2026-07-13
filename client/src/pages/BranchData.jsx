@@ -34,7 +34,7 @@ const BranchData = () => {
           toast.error('Failed to pull system branches list.');
         }
       } catch (err) {
-        console.error(err);
+        console.error(err); 
         toast.error('Error establishing database handshake.');
       } finally {
         setLoadingBranches(false);
