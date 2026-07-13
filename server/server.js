@@ -6,7 +6,7 @@ import branchRoutes from './routes/branchRoutes.js';
 import salaryRoutes from './routes/salaryRoutes.js';
 import { setupDatabase } from './models/userModel.js';
 import { setupBranchDatabase } from './models/branchModel.js';
-import { setupSalaryDatabase } from './models/salaryModel.js';
+import { setupSalaryDatabase } from './models/SalaryModel.js';
 
 dotenv.config();
 
