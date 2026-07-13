@@ -50,7 +50,7 @@ const DataEntry = () => {
   useEffect(() => {
     const fetchBranches = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/branches', {
+        const response = await fetch(`${import.meta.env.VITE_APP_BASE_URL}/api/branches`, {
           headers: getAuthHeaders()
         });
         if (response.ok) {
@@ -83,7 +83,7 @@ const DataEntry = () => {
 
   const fetchExistingProfilesByBranch = async (branchId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/salary/employee-list?branchId=${branchId}`, {
+      const response = await fetch(`${import.meta.env.VITE_APP_BASE_URL}/api/salary/employee-list?branchId=${branchId}`, {
         headers: getAuthHeaders()
       });
       if (response.ok) {
@@ -192,7 +192,7 @@ const DataEntry = () => {
     };
 
     try {
-      const response = await fetch('http://localhost:5000/api/salary/submit', {
+      const response = await fetch(`${import.meta.env.VITE_APP_BASE_URL}/api/salary/submit`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify(payload)

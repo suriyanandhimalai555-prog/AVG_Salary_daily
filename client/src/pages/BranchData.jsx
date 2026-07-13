@@ -24,7 +24,7 @@ const BranchData = () => {
   useEffect(() => {
     const fetchBranches = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/branches', {
+        const response = await fetch(`${import.meta.env.VITE_APP_BASE_URL}/api/branches`, {
           headers: getAuthHeaders()
         });
         if (response.ok) {
@@ -48,7 +48,7 @@ const BranchData = () => {
     setSelectedBranch(branch);
     setLoadingEmployees(true);
     try {
-      const response = await fetch(`http://localhost:5000/api/salary/branch-records?branchId=${branch._id || branch.id}`, {
+      const response = await fetch(`${import.meta.env.VITE_APP_BASE_URL}/api/salary/branch-records?branchId=${branch._id || branch.id}`, {
         headers: getAuthHeaders()
       });
       if (response.ok) {

@@ -25,7 +25,7 @@ const OnboardBranch = () => {
   // --- FETCH ALL BRANCHES ON MOUNT ---
   const fetchBranches = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/branches', {
+      const response = await fetch(`${import.meta.env.VITE_APP_BASE_URL}/api/branches`, {
         headers: getAuthHeaders()
       });
       const data = await response.json();
@@ -51,7 +51,7 @@ const OnboardBranch = () => {
     const toastId = toast.loading('Registering branch node...');
 
     try {
-      const response = await fetch('http://localhost:5000/api/branches', {
+      const response = await fetch(`${import.meta.env.VITE_APP_BASE_URL}/api/branches`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({ name: branchInput.trim() })
@@ -75,7 +75,7 @@ const OnboardBranch = () => {
 
     const toastId = toast.loading('Updating database entries...');
     try {
-      const response = await fetch(`http://localhost:5000/api/branches/${id}`, {
+      const response = await fetch(`${import.meta.env.VITE_APP_BASE_URL}/api/branches/${id}`, {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify({ name: editingName.trim() })
@@ -97,7 +97,7 @@ const OnboardBranch = () => {
     const { branchId } = deleteModal;
     const toastId = toast.loading('Purging record from ledger...');
     try {
-      const response = await fetch(`http://localhost:5000/api/branches/${branchId}`, {
+      const response = await fetch(`${import.meta.env.VITE_APP_BASE_URL}/api/branches/${branchId}`, {
         method: 'DELETE',
         headers: getAuthHeaders()
       });
